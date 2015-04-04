@@ -12,24 +12,21 @@ app.get('/', function(req, res) {
 
 // tracker
 app.get('/track', function(req, res) {
-    var hostname = (req.headers.host.match(/:/g)) ? req.headers.host.slice(0, req.headers.host.indexOf(":")) : req.headers.host;
-    tracker.track(req.query.x, req.query.y, req.query.time, hostname);
-    res.send(req.query.x + ' ' + req.query.y + ' ' + req.query.time + ' ' + req.headers.host);
+    tracker.track(req.query.x, req.query.y, req.query.t, req.query.url);
+    res.send(req.query.x + ' ' + req.query.y + ' ' + req.query.t + ' ' + req.headers.host);
 });
-
-//app.get('/debug', function(req, res) {
-//    res.sendfile(__dirname + '/index.html');
-//});
 
 // provider
 io.on('connection', function(socket) {
 
     var redisClient;
 
-    socket.on('host', function(hostname) {
+    socket.on('url', function(data) {
         redisClient = redis.createClient(6379, 'localhost');
-        redisClient.subscribe(hostname);
+        console.log(data);
+        redisClient.subscribe(data.value);
         redisClient.on("message", function(channel, message) {
+            //console.log(message);
             socket.emit('data', message);
         });
     });
@@ -42,12 +39,6 @@ io.on('connection', function(socket) {
                 }
             });
         }
-    })
-});
-
-app.get('/debug', function(req, res) {
-    receiver.receive(req.query.host, function(id, x, y) {
-        console.log(id + " " + x + " " + y);
     })
 });
 
